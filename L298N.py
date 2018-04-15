@@ -25,12 +25,15 @@ class Motor(object):
 	_DEBUG = False
 	_DEBUG_INFO = 'DEBUG "L298N.py":'
 
-	def __init__(self, direction_channel_a, direction_channel_b, pwm=None):
+	def __init__(self, direction_channel_a, direction_channel_b, pwm=None, offset=True):
 		'''Init a motor on giving dir. channel and PWM channel.'''
 		if self._DEBUG:
 			print self._DEBUG_INFO, "Debug on"
 		self.direction_channel_a = direction_channel_a
 		self.direction_channel_b = direction_channel_b
+		self._offset = offset
+		self.forward_offset = self._offset
+		self.backward_offset = not self.forward_offset
 		self._pwm = pwm
 		self._speed = 0
 
@@ -42,6 +45,20 @@ class Motor(object):
 			print self._DEBUG_INFO, 'setup motor pwm channel as', self._pwm.__name__
 		GPIO.setup(self.direction_channel_a, GPIO.OUT)
 		GPIO.setup(self.direction_channel_b, GPIO.OUT)
+
+	@property
+	def offset(self):
+		return self._offset
+
+	@offset.setter
+	def offset(self, value):
+		''' Set offset for much user-friendly '''
+		if value not in (True, False):
+			raise ValueError('offset value must be Bool value, not"{0}"'.format(value))
+		self.forward_offset = value
+		self.backward_offset = not self.forward_offset
+		if self._DEBUG:
+			print self._DEBUG_INFO, 'Set offset to %d' % self._offset
 
 	@property
 	def speed(self):
@@ -61,16 +78,16 @@ class Motor(object):
 
 	def forward(self):
 		''' Set the motor direction to forward '''
-		GPIO.output(self.direction_channel_a, GPIO.LOW)
-		GPIO.output(self.direction_channel_b, GPIO.HIGH)
+		GPIO.output(self.direction_channel_a, not self.forward_offset)
+		GPIO.output(self.direction_channel_b, self.forward_offset)
 		self.speed = self._speed
 		if self._DEBUG:
 			print self._DEBUG_INFO, 'Motor moving forward (%s)' % str((GPIO.LOW, GPIO.HIGH))
 
 	def backward(self):
 		''' Set the motor direction to backward '''
-		GPIO.output(self.direction_channel_a, GPIO.HIGH)
-		GPIO.output(self.direction_channel_b, GPIO.LOW)
+		GPIO.output(self.direction_channel_a, not self.backward_offset)
+		GPIO.output(self.direction_channel_b, self.backward_offset)
 		self.speed = self._speed
 		if self._DEBUG:
 			print self._DEBUG_INFO, 'Motor moving backward (%s)' % str((GPIO.HIGH, GPIO.LOW))
