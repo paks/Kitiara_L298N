@@ -13,6 +13,7 @@
 
 import time
 from Kitiara_L298N import L298N
+from SunFounder_PCA9685 import PCA9685
 
 def main():
 	print "********************************************"
@@ -25,10 +26,23 @@ def main():
 	print "*         Connect PWMB to BCM12            *"
 	print "*                                          *"
 	print "********************************************"
-	motorA = L298N.Motor(17, 27)
-	motorB = L298N.Motor(18, 22)
+	pwm = PCA9685.PWM()
+	pwm.debug = True
+	pwm.frequency = 60
+
+	def a_speed(value):
+		pwm.write(0,0,value)
+
+	def b_speed(value):
+		pwm.write(3,0,value)
+
+	motorA = L298N.Motor(5, 6)
+	motorB = L298N.Motor(13, 19)
 	motorA.set_debug(True)
 	motorB.set_debug(True)
+	motorA.pwm = a_speed
+	motorB.pwm = b_speed
+	
 
 	delay = 0.05
 
